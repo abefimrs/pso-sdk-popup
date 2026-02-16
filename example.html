@@ -599,7 +599,10 @@
             closeOnSuccess: true,
             allowClose: true,
             debug: true,
-            forceParentRedirect: true,
+        allowClose: false,
+            // bKash will be detected and handled automatically
+    noIframeMethod: 'popup',  // or 'new_window', 'full_redirect', 'auto'
+    
             
             onSuccess: async function(data) {
                 console.log('✅ Payment successful:', data);

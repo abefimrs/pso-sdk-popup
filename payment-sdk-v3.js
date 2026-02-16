@@ -1,6 +1,14 @@
 /**
- * Payment Gateway SDK
+ * Payment Gateway SDK - ENHANCED VERSION
  * Opens payment gateway in modal popup instead of redirect
+ * 
+ * FEATURES:
+ * - Transparent iframe (no background)
+ * - All redirects go to parent window
+ * - OTP redirects open in main page
+ * - X-Frame-Options detection with automatic fallback
+ * - bKash and other blocking gateways handled gracefully
+ * - Only popup close button works
  */
 (function(window) {
     'use strict';
@@ -9,7 +17,7 @@
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isIPhone = /iPhone/i.test(navigator.userAgent);
     
-    // Modal CSS - tnextpay style
+    // Modal CSS - Enhanced for transparent iframe
     const modalStyles = `
         .payment-modal-overlay {
             display: none;
@@ -105,6 +113,7 @@
             height: 100%;
             border: none;
             display: block;
+            background: transparent !important;
         }
         
         .payment-modal-loader {
@@ -123,7 +132,7 @@
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto;
         }
         
         @keyframes spin {
@@ -132,11 +141,51 @@
         }
         
         .payment-loader-text {
+            margin-top: 15px;
             color: #666;
             font-size: 14px;
         }
+
+        .payment-error-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .payment-error-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .payment-error-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .payment-error-message {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .payment-redirect-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .payment-countdown {
+            font-size: 18px;
+            font-weight: 600;
+            color: #3498db;
+            margin: 10px 0;
+        }
         
-        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .payment-modal {
                 width: 100%;
@@ -145,9 +194,13 @@
                 max-height: 100%;
                 border-radius: 0;
             }
-            
-            .payment-modal-header {
-                border-radius: 0;
+
+            .payment-modal-close {
+                top: 15px;
+                right: 15px;
+                width: 40px;
+                height: 40px;
+                font-size: 28px;
             }
         }
     `;
@@ -170,7 +223,13 @@
                 debug: options.debug || false,
                 autoResize: options.autoResize !== false,
                 minHeight: options.minHeight || 400,
-                maxHeight: options.maxHeight || (isMobile ? window.innerHeight : window.innerHeight - 100)
+                maxHeight: options.maxHeight || (isMobile ? window.innerHeight : window.innerHeight - 100),
+                // Force all redirects to parent window
+                forceParentRedirect: options.forceParentRedirect !== false,
+                // X-Frame-Options detection timeout (ms)
+                iframeLoadTimeout: options.iframeLoadTimeout || 5000,
+                // Redirect delay when X-Frame-Options detected (ms)
+                redirectDelay: options.redirectDelay || 3000
             };
 
             this.modal = null;
@@ -179,6 +238,9 @@
             this.isOpen = false;
             this.isMobile = isMobile;
             this.isIPhone = isIPhone;
+            this.iframeLoadTimer = null;
+            this.iframeLoaded = false;
+            this.currentPaymentUrl = null;
 
             this._createModal();
             this._bindEvents();
@@ -202,7 +264,13 @@
                             <div class="payment-spinner"></div>
                             <div class="payment-loader-text">Loading payment gateway...</div>
                         </div>
-                        <iframe class="payment-modal-iframe" style="display:none;" allow="payment" sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox"></iframe>
+                        <iframe 
+                            class="payment-modal-iframe" 
+                            style="display:none;" 
+                            allow="payment" 
+                            allowtransparency="true"
+                            sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox">
+                        </iframe>
                         <div class="payment-modal-content"></div>
                     </div>
                 </div>
@@ -253,12 +321,158 @@
 
             // Iframe load event
             this.iframe.addEventListener('load', () => {
-                this._log('Iframe loaded');
-                this.loader.style.display = 'none';
-                this.iframe.style.display = 'block';
+                this._log('Iframe load event triggered');
+                
+                // Clear the timeout since iframe loaded
+                if (this.iframeLoadTimer) {
+                    clearTimeout(this.iframeLoadTimer);
+                    this.iframeLoadTimer = null;
+                }
+
+                // Check if iframe content is accessible
+                try {
+                    const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
+                    
+                    if (iframeDoc && iframeDoc.body) {
+                        // Check if body has content (not blocked)
+                        const hasContent = iframeDoc.body.children.length > 0 || iframeDoc.body.textContent.trim().length > 0;
+                        
+                        if (hasContent) {
+                            this._log('Iframe loaded successfully with content');
+                            this.iframeLoaded = true;
+                            this.loader.style.display = 'none';
+                            this.iframe.style.display = 'block';
+                            this._tryInjectIframeStyles();
+                        } else {
+                            this._log('Iframe loaded but appears empty - possible X-Frame-Options block');
+                            // Give it a moment, might still be loading
+                            setTimeout(() => {
+                                if (!this.iframeLoaded) {
+                                    this._handleIframeBlocked();
+                                }
+                            }, 1000);
+                        }
+                    }
+                } catch (e) {
+                    // Cross-origin - can't access document, but that's OK if content loads
+                    this._log('Iframe loaded (cross-origin - cannot inspect content)');
+                    this.iframeLoaded = true;
+                    this.loader.style.display = 'none';
+                    this.iframe.style.display = 'block';
+                }
+            });
+
+            // Iframe error event (not always triggered for X-Frame-Options)
+            this.iframe.addEventListener('error', () => {
+                this._log('Iframe error event triggered');
+                this._handleIframeBlocked();
             });
         }
 
+        /**
+         * Try to inject CSS into iframe to hide unwanted elements
+         * Only works for same-origin iframes
+         */
+        _tryInjectIframeStyles() {
+            try {
+                const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
+                if (iframeDoc && iframeDoc.head) {
+                    const style = iframeDoc.createElement('style');
+                    style.textContent = `
+                        /* Hide common close button classes */
+                        .close-button, 
+                        .btn-close, 
+                        .modal-close,
+                        [aria-label*="Close"],
+                        [data-dismiss="modal"] {
+                            display: none !important;
+                        }
+                        /* Make body background transparent */
+                        body {
+                            background: transparent !important;
+                        }
+                    `;
+                    iframeDoc.head.appendChild(style);
+                    this._log('Successfully injected iframe styles');
+                }
+            } catch (e) {
+                // Cross-origin - can't modify iframe content (expected for payment gateways)
+                this._log('Cannot inject CSS into cross-origin iframe (expected for payment gateways)');
+            }
+        }
+
+        /**
+         * Handle iframe blocked by X-Frame-Options
+         */
+        _handleIframeBlocked() {
+            this._log('Iframe blocked - likely X-Frame-Options: DENY or SAMEORIGIN');
+            
+            if (this.iframeLoadTimer) {
+                clearTimeout(this.iframeLoadTimer);
+                this.iframeLoadTimer = null;
+            }
+
+            const url = this.currentPaymentUrl || this.iframe.src;
+            
+            // Show redirect message
+            this._showRedirectMessage(url);
+        }
+
+        /**
+         * Show redirect message when iframe is blocked
+         */
+        _showRedirectMessage(url) {
+            this.loader.style.display = 'none';
+            this.iframe.style.display = 'none';
+            
+            let countdown = Math.floor(this.options.redirectDelay / 1000);
+            
+            this.contentDiv.innerHTML = `
+                <div class="payment-error-container">
+                    <div class="payment-error-icon">🔒</div>
+                    <h2 class="payment-error-title">Secure Payment Gateway</h2>
+                    <p class="payment-error-message">
+                        This payment gateway cannot be displayed in a popup for security reasons.
+                    </p>
+                    <div class="payment-redirect-info">
+                        You will be redirected to the secure payment page
+                    </div>
+                    <div class="payment-countdown" id="countdown-timer">
+                        Redirecting in <span id="countdown-seconds">${countdown}</span> seconds...
+                    </div>
+                    <p style="margin-top: 20px; color: #999; font-size: 14px;">
+                        Click below to proceed immediately
+                    </p>
+                    <button 
+                        onclick="window.location.href='${url}'" 
+                        style="margin-top: 10px; padding: 12px 30px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: 500;">
+                        Continue to Payment →
+                    </button>
+                </div>
+            `;
+            this.contentDiv.classList.add('active');
+            this.contentDiv.style.display = 'block';
+            
+            // Start countdown
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                const countdownEl = document.getElementById('countdown-seconds');
+                if (countdownEl) {
+                    countdownEl.textContent = countdown;
+                }
+                
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    this._log('Redirecting to payment gateway:', url);
+                    this.close();
+                    window.location.href = url;
+                }
+            }, 1000);
+        }
+
+        /**
+         * Handle messages from iframe with parent window redirects
+         */
         _handleMessage(event) {
             // TODO: Add origin validation for security
             // if (event.origin !== 'https://your-gateway.com') return;
@@ -273,24 +487,45 @@
                 return;
             }
 
-            // Check for any redirect URL in the message (priority handling)
+            // Check for any redirect URL in the message
             const redirectUrl = data.url || data.redirectUrl || data.redirect_url || 
-                               data.gateway_url || data.gatewayUrl || data.GatewayPageURL;
+                               data.gateway_url || data.gatewayUrl || data.GatewayPageURL ||
+                               data.otp_url || data.otpUrl;
             
-            // Handle redirect types - check type field first
+            // Handle OTP redirect - ALWAYS redirect parent window, not iframe
+            if (data.type === 'otp_redirect' || data.event === 'otp_required') {
+                if (redirectUrl) {
+                    this._log('OTP redirect detected - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    window.top.location.href = redirectUrl;
+                    return;
+                }
+            }
+
+            // Handle redirect types - redirect PARENT window
             if (data.type === 'redirect' || data.type === 'gw_redirect') {
                 if (redirectUrl) {
-                    this._log('Type redirect to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Gateway redirect - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                 }
                 return;
             }
 
-            // Handle explicit redirect flag
+            // Handle explicit redirect flag - redirect PARENT window
             if (data.redirect === true || data.redirect === 1) {
                 if (redirectUrl) {
-                    this._log('Redirect flag detected, redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Explicit redirect flag - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
             }
@@ -301,20 +536,25 @@
                 return;
             }
 
-            // Handle OTP/HTML content injection
+            // Handle OTP/HTML content injection (for in-modal OTP)
             if (data.type === 'otp' && data.data) {
                 this._injectContent(data.data);
                 return;
             }
 
-            // Handle success with automatic redirect
+            // Handle success with automatic redirect to PARENT window
             if (data.status === 'success' || data.event === 'payment_success') {
                 this._log('Payment successful', data);
                 
-                // Auto-redirect if URL is provided
+                // Auto-redirect if URL is provided - redirect PARENT window
                 if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                    this._log('Success - redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Success - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
                 
@@ -328,14 +568,19 @@
                 return;
             }
 
-            // Handle error/failure with potential redirect
+            // Handle error/failure with potential redirect to PARENT window
             if (data.status === 'error' || data.status === 'failed' || data.event === 'payment_failed') {
                 this._log('Payment failed', data);
                 
-                // Some gateways redirect even on failure
+                // Some gateways redirect even on failure - redirect PARENT window
                 if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                    this._log('Error - redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Error - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
                 
@@ -345,14 +590,19 @@
                 return;
             }
 
-            // Handle cancel with potential redirect
+            // Handle cancel with potential redirect to PARENT window
             if (data.status === 'cancel' || data.event === 'payment_cancelled') {
                 this._log('Payment cancelled', data);
                 
-                // Check if there's a cancel redirect URL
+                // Check if there's a cancel redirect URL - redirect PARENT window
                 if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                    this._log('Cancel - redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Cancel - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
                 
@@ -360,16 +610,20 @@
                 return;
             }
 
-            // Fallback: if message contains any URL field, redirect to it
+            // Fallback - if message contains any URL field, redirect PARENT window
             if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                this._log('Generic redirect detected, redirecting to:', redirectUrl);
-                window.location.href = redirectUrl;
+                this._log('Generic redirect detected - redirecting PARENT window to:', redirectUrl);
+                this.close();
+                if (this.options.forceParentRedirect) {
+                    window.top.location.href = redirectUrl;
+                } else {
+                    window.location.href = redirectUrl;
+                }
             }
         }
 
         /**
          * Handle iframe resize
-         * @param {number} height - New height for iframe
          */
         _handleResize(height) {
             if (this.isMobile) {
@@ -385,7 +639,6 @@
 
         /**
          * Inject HTML content (for OTP pages, etc.)
-         * @param {string} htmlContent - HTML content to inject
          */
         _injectContent(htmlContent) {
             this._log('Injecting content');
@@ -404,7 +657,6 @@
 
         /**
          * Open payment modal with gateway URL
-         * @param {string} paymentUrl - The payment gateway URL
          */
         open(paymentUrl) {
             if (!paymentUrl) {
@@ -415,7 +667,11 @@
             this._log('Opening payment modal:', paymentUrl);
             this._log('Mobile device:', this.isMobile, 'iPhone:', this.isIPhone);
 
+            // Store current payment URL
+            this.currentPaymentUrl = paymentUrl;
+
             // Reset state
+            this.iframeLoaded = false;
             this.loader.style.display = 'block';
             this.iframe.style.display = 'none';
             this.contentDiv.style.display = 'none';
@@ -426,9 +682,22 @@
             this.iframe.style.height = '';
             this.iframe.style.minHeight = '';
             
-            // Append ?full=1 for tnextpay-style gateways
+            // Clear any existing timeout
+            if (this.iframeLoadTimer) {
+                clearTimeout(this.iframeLoadTimer);
+            }
+            
+            // Append ?full=1 for SSLCommerz-style gateways
             const separator = paymentUrl.includes('?') ? '&' : '?';
             const fullUrl = `${paymentUrl}${separator}full=1`;
+            
+            // Set timeout to detect X-Frame-Options blocking
+            this.iframeLoadTimer = setTimeout(() => {
+                if (!this.iframeLoaded) {
+                    this._log('Iframe load timeout - likely blocked by X-Frame-Options');
+                    this._handleIframeBlocked();
+                }
+            }, this.options.iframeLoadTimeout);
             
             // Load payment page in iframe
             this.iframe.src = fullUrl;
@@ -453,8 +722,16 @@
         close() {
             this._log('Closing payment modal');
 
+            // Clear any timers
+            if (this.iframeLoadTimer) {
+                clearTimeout(this.iframeLoadTimer);
+                this.iframeLoadTimer = null;
+            }
+
             this.modal.classList.remove('active');
             this.isOpen = false;
+            this.iframeLoaded = false;
+            this.currentPaymentUrl = null;
 
             // Restore body scroll
             document.body.style.overflow = '';
@@ -483,6 +760,12 @@
          */
         destroy() {
             this._log('Destroying payment modal');
+            
+            // Clear timers
+            if (this.iframeLoadTimer) {
+                clearTimeout(this.iframeLoadTimer);
+                this.iframeLoadTimer = null;
+            }
             
             if (this.modal && this.modal.parentNode) {
                 this.modal.parentNode.removeChild(this.modal);

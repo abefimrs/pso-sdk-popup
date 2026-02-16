@@ -1,6 +1,13 @@
 /**
- * Payment Gateway SDK
+ * Payment Gateway SDK - MODIFIED VERSION
  * Opens payment gateway in modal popup instead of redirect
+ * 
+ * MODIFICATIONS:
+ * - Removed iframe background (transparent)
+ * - All redirects go to parent window (not iframe)
+ * - OTP redirects open in main page
+ * - Only popup close button works (iframe buttons hidden)
+ * - Better cross-origin handling
  */
 (function(window) {
     'use strict';
@@ -9,7 +16,7 @@
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const isIPhone = /iPhone/i.test(navigator.userAgent);
     
-    // Modal CSS - tnextpay style
+    // Modal CSS - Enhanced for transparent iframe
     const modalStyles = `
         .payment-modal-overlay {
             display: none;
@@ -105,6 +112,7 @@
             height: 100%;
             border: none;
             display: block;
+            background: transparent !important;
         }
         
         .payment-modal-loader {
@@ -123,7 +131,6 @@
             width: 40px;
             height: 40px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
         }
         
         @keyframes spin {
@@ -132,21 +139,17 @@
         }
         
         .payment-loader-text {
+            margin-top: 15px;
             color: #666;
             font-size: 14px;
         }
         
-        /* Mobile responsiveness */
         @media (max-width: 768px) {
             .payment-modal {
                 width: 100%;
                 height: 100%;
                 max-width: 100%;
                 max-height: 100%;
-                border-radius: 0;
-            }
-            
-            .payment-modal-header {
                 border-radius: 0;
             }
         }
@@ -170,7 +173,9 @@
                 debug: options.debug || false,
                 autoResize: options.autoResize !== false,
                 minHeight: options.minHeight || 400,
-                maxHeight: options.maxHeight || (isMobile ? window.innerHeight : window.innerHeight - 100)
+                maxHeight: options.maxHeight || (isMobile ? window.innerHeight : window.innerHeight - 100),
+                // NEW: Option to force all redirects to parent window
+                forceParentRedirect: options.forceParentRedirect !== false
             };
 
             this.modal = null;
@@ -202,7 +207,13 @@
                             <div class="payment-spinner"></div>
                             <div class="payment-loader-text">Loading payment gateway...</div>
                         </div>
-                        <iframe class="payment-modal-iframe" style="display:none;" allow="payment" sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox"></iframe>
+                        <iframe 
+                            class="payment-modal-iframe" 
+                            style="display:none;" 
+                            allow="payment" 
+                            allowtransparency="true"
+                            sandbox="allow-forms allow-scripts allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox">
+                        </iframe>
                         <div class="payment-modal-content"></div>
                     </div>
                 </div>
@@ -256,10 +267,50 @@
                 this._log('Iframe loaded');
                 this.loader.style.display = 'none';
                 this.iframe.style.display = 'block';
+                
+                // Try to inject CSS to hide gateway's close buttons (only works if same-origin)
+                this._tryInjectIframeStyles();
             });
         }
 
+        /**
+         * NEW: Try to inject CSS into iframe to hide unwanted elements
+         * Only works for same-origin iframes
+         */
+        _tryInjectIframeStyles() {
+            try {
+                const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
+                if (iframeDoc) {
+                    const style = iframeDoc.createElement('style');
+                    style.textContent = `
+                        /* Hide common close button classes */
+                        .close-button, 
+                        .btn-close, 
+                        .modal-close,
+                        [aria-label*="Close"],
+                        [data-dismiss="modal"] {
+                            display: none !important;
+                        }
+                        /* Make body background transparent */
+                        body {
+                            background: transparent !important;
+                        }
+                    `;
+                    iframeDoc.head.appendChild(style);
+                    this._log('Successfully injected iframe styles');
+                }
+            } catch (e) {
+                // Cross-origin - can't modify iframe content
+                this._log('Cannot inject CSS into cross-origin iframe (expected for payment gateways)');
+            }
+        }
+
+        /**
+         * MODIFIED: Handle messages from iframe with parent window redirects
+         */
         _handleMessage(event) {
+            console.log("EVENT: "+event);
+            this._log('Event Triggered');
             // TODO: Add origin validation for security
             // if (event.origin !== 'https://your-gateway.com') return;
 
@@ -275,22 +326,44 @@
 
             // Check for any redirect URL in the message (priority handling)
             const redirectUrl = data.url || data.redirectUrl || data.redirect_url || 
-                               data.gateway_url || data.gatewayUrl || data.GatewayPageURL;
+                               data.gateway_url || data.gatewayUrl || data.GatewayPageURL ||
+                               data.otp_url || data.otpUrl; // Added OTP URL detection
             
-            // Handle redirect types - check type field first
+            // NEW: Handle OTP redirect - ALWAYS redirect parent window, not iframe
+            if (data.type === 'otp_redirect' || data.event === 'otp_required') {
+                if (redirectUrl) {
+                    this._log('OTP redirect detected - redirecting PARENT window to:', redirectUrl);
+                    this.close(); // Close modal properly
+                    window.top.location.href = redirectUrl; // Redirect main window
+                    return;
+                }
+            }
+
+            // MODIFIED: Handle redirect types - redirect PARENT window
             if (data.type === 'redirect' || data.type === 'gw_redirect') {
                 if (redirectUrl) {
-                    this._log('Type redirect to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Gateway redirect - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    // Use window.top to ensure parent window redirect
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                 }
                 return;
             }
 
-            // Handle explicit redirect flag
+            // MODIFIED: Handle explicit redirect flag - redirect PARENT window
             if (data.redirect === true || data.redirect === 1) {
                 if (redirectUrl) {
-                    this._log('Redirect flag detected, redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Explicit redirect flag - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
             }
@@ -301,20 +374,25 @@
                 return;
             }
 
-            // Handle OTP/HTML content injection
+            // Handle OTP/HTML content injection (for in-modal OTP)
             if (data.type === 'otp' && data.data) {
                 this._injectContent(data.data);
                 return;
             }
 
-            // Handle success with automatic redirect
+            // MODIFIED: Handle success with automatic redirect to PARENT window
             if (data.status === 'success' || data.event === 'payment_success') {
                 this._log('Payment successful', data);
                 
-                // Auto-redirect if URL is provided
+                // Auto-redirect if URL is provided - redirect PARENT window
                 if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                    this._log('Success - redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Success - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
                 
@@ -328,14 +406,19 @@
                 return;
             }
 
-            // Handle error/failure with potential redirect
+            // MODIFIED: Handle error/failure with potential redirect to PARENT window
             if (data.status === 'error' || data.status === 'failed' || data.event === 'payment_failed') {
                 this._log('Payment failed', data);
                 
-                // Some gateways redirect even on failure
+                // Some gateways redirect even on failure - redirect PARENT window
                 if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                    this._log('Error - redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Error - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
                 
@@ -345,14 +428,19 @@
                 return;
             }
 
-            // Handle cancel with potential redirect
+            // MODIFIED: Handle cancel with potential redirect to PARENT window
             if (data.status === 'cancel' || data.event === 'payment_cancelled') {
                 this._log('Payment cancelled', data);
                 
-                // Check if there's a cancel redirect URL
+                // Check if there's a cancel redirect URL - redirect PARENT window
                 if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                    this._log('Cancel - redirecting to:', redirectUrl);
-                    window.location.href = redirectUrl;
+                    this._log('Cancel - redirecting PARENT window to:', redirectUrl);
+                    this.close();
+                    if (this.options.forceParentRedirect) {
+                        window.top.location.href = redirectUrl;
+                    } else {
+                        window.location.href = redirectUrl;
+                    }
                     return;
                 }
                 
@@ -360,10 +448,15 @@
                 return;
             }
 
-            // Fallback: if message contains any URL field, redirect to it
+            // MODIFIED: Fallback - if message contains any URL field, redirect PARENT window
             if (redirectUrl && redirectUrl.indexOf('http') !== -1) {
-                this._log('Generic redirect detected, redirecting to:', redirectUrl);
-                window.location.href = redirectUrl;
+                this._log('Generic redirect detected - redirecting PARENT window to:', redirectUrl);
+                this.close();
+                if (this.options.forceParentRedirect) {
+                    window.top.location.href = redirectUrl;
+                } else {
+                    window.location.href = redirectUrl;
+                }
             }
         }
 
@@ -426,7 +519,7 @@
             this.iframe.style.height = '';
             this.iframe.style.minHeight = '';
             
-            // Append ?full=1 for tnextpay-style gateways
+            // Append ?full=1 for SSLCommerz-style gateways
             const separator = paymentUrl.includes('?') ? '&' : '?';
             const fullUrl = `${paymentUrl}${separator}full=1`;
             
