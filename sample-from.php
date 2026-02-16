@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Form - Technonextpay</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --light-bg: #f8fafc;
+            --dark-text: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-container img {
+            max-height: 60px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+        }
+
+        .logo-container hr {
+            margin-top: 20px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .box-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .box-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .box-icon i {
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .box-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-label i {
+            margin-right: 8px;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.1);
+        }
+
+        .input-group-text {
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px 0 0 10px;
+        }
+
+        .input-group .form-control {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(71, 85, 105, 0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .required {
+            color: var(--danger-color);
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .box {
+                padding: 20px;
+            }
+            
+            .box-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .box-icon {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <div class="logo-container">
+                    <img src="assets/image/TechnonextPay-logo.png" alt="">
+                    <hr>
+                </div>
+                
+                <form id="paymentForm" novalidate>
+                    <div class="main-content">
+                        <!-- MDF Box -->
+                        <div class="box">
+                            <div class="box-header">
+                                <div class="box-icon">
+                                    <i class="fas fa-tags"></i>
+                                </div>
+                                <h2 class="box-title">MDF Values/h2>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="mdf1" class="form-label">MDF 1</label>
+                                <input type="text" class="form-control" id="mdf1" name="mdf1" value="value1">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="mdf2" class="form-label">MDF 2</label>
+                                <input type="text" class="form-control" id="mdf2" name="mdf2" value="value2">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="mdf3" class="form-label">MDF 3</label>
+                                <input type="text" class="form-control" id="mdf3" name="mdf3" value="value3">
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="mdf4" class="form-label">MDF 4</label>
+                                <input type="text" class="form-control" id="mdf4" name="mdf4" value="value4">
+                            </div>
+                        </div>
+
+                        <!-- Transaction Information Box -->
+                        <div class="box">
+                            <div class="box-header">
+                                <div class="box-icon">
+                                    <i class="fas fa-credit-card"></i>
+                                </div>
+                                <h2 class="box-title">Payment Information</h2>
+                            </div>
+                            
+                            <!-- Payment Details Section -->
+                            <div class="form-section">
+                                <div class="section-title">Payment Details</div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="currency_code" class="form-label">
+                                                <i class="fas fa-coins"></i> Currency Code <span class="required">*</span>
+                                            </label>
+                                            <select class="form-select" id="currency_code" name="currency_code" required>
+                                                <option value="BDT" selected>BDT - Bangladeshi Taka</option>
+                                                <option value="USD">USD - US Dollar</option>
+                                                <option value="EUR">EUR - Euro</option>
+                                                <option value="GBP">GBP - British Pound</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="payable_amount" class="form-label">
+                                                <i class="fas fa-money-bill-wave"></i> Payable Amount <span class="required">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">BDT</span>
+                                                <input type="number" class="form-control" id="payable_amount" name="payable_amount" 
+                                                       value="10" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="product_amount" class="form-label">
+                                                <i class="fas fa-shopping-cart"></i> Product Amount <span class="required">*</span>
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">BDT</span>
+                                                <input type="number" class="form-control" id="product_amount" name="product_amount" 
+                                                       value="10" step="0.01" min="0" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="preferred_channel" class="form-label">
+                                                <i class="fas fa-credit-card"></i> Preferred Channel <span class="required">*</span>
+                                            </label>
+                                            <select class="form-select" id="preferred_channel" name="preferred_channel" required>
+                                                <option value="VISA" selected>VISA</option>
+                                                <option value="MASTERCARD">Mastercard</option>
+                                                <option value="AMEX">American Express</option>
+                                                <option value="BKASH">bKash</option>
+                                                <option value="NAGAD">Nagad</option>
+                                                <option value="ROCKET">Rocket</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="discount_amount" class="form-label">
+                                                <i class="fas fa-percentage"></i> Discount Amount
+                                            </label>
+                                            <div class="input-group">
+                                                <span class="input-group-text">BDT</span>
+                                                <input type="number" class="form-control" id="discount_amount" name="discount_amount" 
+                                                       value="0" step="0.01" min="0">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="disc_percent" class="form-label">
+                                                <i class="fas fa-percentage"></i> Discount Percentage
+                                            </label>
+                                            <div class="input-group">
+                                                <input type="number" class="form-control" id="disc_percent" name="disc_percent" 
+                                                       value="0" step="0.01" min="0" max="100">
+                                                <span class="input-group-text">%</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="allowed_bin" class="form-label">
+                                        <i class="fas fa-list"></i> Allowed BIN
+                                    </label>
+                                    <input type="text" class="form-control" id="allowed_bin" name="allowed_bin" 
+                                           placeholder="Enter allowed BIN numbers (comma separated)">
+                                </div>
+                            </div>
+                            
+                            <!-- Customer Information Section -->
+                            <div class="form-section">
+                                <div class="section-title">Customer Information</div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customer_name" class="form-label">
+                                                <i class="fas fa-user"></i> Customer Name <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="customer_name" name="customer_name" 
+                                                   value="Md. Sanaullah Asif" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="contact_number" class="form-label">
+                                                <i class="fas fa-phone"></i> Contact Number <span class="required">*</span>
+                                            </label>
+                                            <input type="tel" class="form-control" id="contact_number" name="contact_number" 
+                                                   value="01818482731" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="customer_email" class="form-label">
+                                        <i class="fas fa-envelope"></i> Customer Email
+                                    </label>
+                                    <input type="email" class="form-control" id="customer_email" name="customer_email" 
+                                           value="me.sanaullah.asif@gmail.com">
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customer_primaryAddress" class="form-label">
+                                                <i class="fas fa-home"></i> Primary Address <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="customer_primaryAddress" 
+                                                   name="customer_primaryAddress" value="Dhaka" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="customer_secondaryAddress" class="form-label">
+                                                <i class="fas fa-home"></i> Secondary Address
+                                            </label>
+                                            <input type="text" class="form-control" id="customer_secondaryAddress" 
+                                                   name="customer_secondaryAddress" value="Dhaka">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="customer_city" class="form-label">
+                                                <i class="fas fa-city"></i> City <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="customer_city" name="customer_city" 
+                                                   value="Dhaka" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="customer_state" class="form-label">
+                                                <i class="fas fa-map"></i> State <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="customer_state" name="customer_state" 
+                                                   value="Dhaka" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="customer_postcode" class="form-label">
+                                                <i class="fas fa-mail-bulk"></i> Postcode <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="customer_postcode" name="customer_postcode" 
+                                                   value="1207" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label for="customer_country" class="form-label">
+                                                <i class="fas fa-globe"></i> Country <span class="required">*</span>
+                                            </label>
+                                            <select class="form-select" id="customer_country" name="customer_country" required>
+                                                <option value="Bangladesh" selected>Bangladesh</option>
+                                                <option value="India">India</option>
+                                                <option value="Pakistan">Pakistan</option>
+                                                <option value="Sri Lanka">Sri Lanka</option>
+                                                <option value="Nepal">Nepal</option>
+                                                <option value="United States">United States</option>
+                                                <option value="United Kingdom">United Kingdom</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Shipping Information Section -->
+                            <div class="form-section">
+                                <div class="section-title">Shipping Information</div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="shipping_address" class="form-label">
+                                                <i class="fas fa-truck"></i> Shipping Address <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="shipping_address" name="shipping_address" 
+                                                   value="Dhaka" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="shipping_city" class="form-label">
+                                                <i class="fas fa-city"></i> Shipping City <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="shipping_city" name="shipping_city" 
+                                                   value="Dhaka" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="shipping_country" class="form-label">
+                                                <i class="fas fa-globe"></i> Shipping Country <span class="required">*</span>
+                                            </label>
+                                            <select class="form-select" id="shipping_country" name="shipping_country" required>
+                                                <option value="Bangladesh" selected>Bangladesh</option>
+                                                <option value="India">India</option>
+                                                <option value="Pakistan">Pakistan</option>
+                                                <option value="Sri Lanka">Sri Lanka</option>
+                                                <option value="Nepal">Nepal</option>
+                                                <option value="United States">United States</option>
+                                                <option value="United Kingdom">United Kingdom</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="received_person_name" class="form-label">
+                                                <i class="fas fa-user-check"></i> Receiver Name <span class="required">*</span>
+                                            </label>
+                                            <input type="text" class="form-control" id="received_person_name" 
+                                                   name="received_person_name" value="Asif" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="shipping_phone_number" class="form-label">
+                                        <i class="fas fa-phone-alt"></i> Shipping Phone Number <span class="required">*</span>
+                                    </label>
+                                    <input type="tel" class="form-control" id="shipping_phone_number" name="shipping_phone_number" 
+                                           value="01775503498" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="action-buttons">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check-circle"></i> Submit Payment
+                        </button>
+                        <a href="./index.php" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Payment SDK -->
+    <script src="payment-sdk.js"></script>
+    
+    <script>
+        // Configuration - UPDATE THIS!
+        const BACKEND_API = 'technonextpay_payment.php'; // Your backend endpoint
+        
+        // Initialize Payment SDK
+        const paymentSDK = new PaymentSDK({
+            title: 'Complete Your Payment',
+            closeOnSuccess: true,
+            allowClose: true,
+            debug: true,
+            
+            onSuccess: async function(data) {
+                console.log('✅ Payment successful:', data);
+                
+                // Show success message
+                showAlert('success', 'Payment completed! Verifying...');
+                
+                // Verify payment with backend
+                try {
+                    const response = await fetch('verify-payment.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            transaction_id: data.transaction_id || data.tran_id,
+                            order_id: data.order_id
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showAlert('success', 'Payment verified successfully!');
+                        
+                        // Redirect to success page after 2 seconds
+                        setTimeout(() => {
+                            window.location.href = 'payment-success.html?order=' + (data.order_id || data.tran_id);
+                        }, 2000);
+                    } else {
+                        showAlert('danger', 'Payment verification failed!');
+                        enableSubmitButton();
+                    }
+                } catch (error) {
+                    console.error('Verification error:', error);
+                    showAlert('danger', 'Error verifying payment');
+                    enableSubmitButton();
+                }
+            },
+            
+            onError: function(data) {
+                console.error('❌ Payment failed:', data);
+                showAlert('danger', 'Payment failed. Please try again.');
+                enableSubmitButton();
+            },
+            
+            onClose: function() {
+                console.log('Payment modal closed');
+                enableSubmitButton();
+            }
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Copy customer address to shipping address when shipping fields are empty
+            const customerAddress = document.getElementById('customer_primaryAddress');
+            const shippingAddress = document.getElementById('shipping_address');
+            const customerCity = document.getElementById('customer_city');
+            const shippingCity = document.getElementById('shipping_city');
+            const customerCountry = document.getElementById('customer_country');
+            const shippingCountry = document.getElementById('shipping_country');
+            
+            // Function to copy customer address to shipping if shipping is empty
+            function copyAddressIfEmpty() {
+                if (shippingAddress.value === '') {
+                    shippingAddress.value = customerAddress.value;
+                }
+                if (shippingCity.value === '') {
+                    shippingCity.value = customerCity.value;
+                }
+                if (shippingCountry.value === '') {
+                    shippingCountry.value = customerCountry.value;
+                }
+            }
+            
+            // Add event listeners
+            customerAddress.addEventListener('blur', copyAddressIfEmpty);
+            customerCity.addEventListener('blur', copyAddressIfEmpty);
+            customerCountry.addEventListener('change', copyAddressIfEmpty);
+            
+            // Handle form submission with AJAX
+            const form = document.getElementById('paymentForm');
+            
+            form.addEventListener('submit', async function(event) {
+                event.preventDefault();
+                event.stopPropagation();
+                
+                // Validate form
+                if (!form.checkValidity()) {
+                    form.classList.add('was-validated');
+                    showAlert('warning', 'Please fill all required fields correctly');
+                    return;
+                }
+                
+                // Disable submit button
+                disableSubmitButton();
+                showAlert('info', 'Creating payment session...');
+                
+                // Get form data
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+                
+                // Add order ID if not present
+                if (!data.order_id) {
+                    data.order_id = 'ORD-' + Date.now();
+                }
+                
+                console.log('Submitting payment data:', data);
+                
+                try {
+                    // Send to backend
+                    const response = await fetch(BACKEND_API, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data)
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.payment_url) {
+                        console.log('Payment URL received:', result.payment_url);
+                        
+                        // Hide alert
+                        hideAlert();
+                        
+                        // Open payment in modal
+                        paymentSDK.open(result.payment_url);
+                    } else {
+                        showAlert('danger', result.message || 'Failed to create payment session');
+                        enableSubmitButton();
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showAlert('danger', 'Error connecting to server. Please try again.');
+                    enableSubmitButton();
+                }
+            });
+        });
+        
+        // Helper functions
+        function disableSubmitButton() {
+            const btn = document.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        }
+        
+        function enableSubmitButton() {
+            const btn = document.querySelector('button[type="submit"]');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-check-circle"></i> Submit Payment';
+        }
+        
+        function showAlert(type, message) {
+            // Remove existing alert
+            hideAlert();
+            
+            // Create alert
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 99999; min-width: 300px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);';
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alert.id = 'paymentAlert';
+            
+            document.body.appendChild(alert);
+            
+            // Auto-remove after 5 seconds (except for info/warning)
+            if (type === 'success' || type === 'danger') {
+                setTimeout(() => hideAlert(), 5000);
+            }
+        }
+        
+        function hideAlert() {
+            const alert = document.getElementById('paymentAlert');
+            if (alert) {
+                alert.remove();
+            }
+        }
+    </script>
+</body>
+</html>

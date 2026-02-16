@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Form - Technonextpay SDK Demo</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --danger-color: #ef4444;
+            --info-color: #3b82f6;
+            --light-bg: #f8fafc;
+            --dark-text: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+
+        .container {
+            max-width: 1200px;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 30px;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-container h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+        }
+
+        .logo-container hr {
+            margin-top: 20px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .box {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .box-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .box-icon {
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .box-icon i {
+            color: white;
+            font-size: 1.3rem;
+        }
+
+        .box-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--dark-text);
+            margin: 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-text);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .form-label i {
+            margin-right: 8px;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            padding: 12px 15px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.1);
+        }
+
+        .input-group-text {
+            background: var(--light-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px 0 0 10px;
+        }
+
+        .input-group .form-control {
+            border-radius: 0 10px 10px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #64748b;
+            border: none;
+            padding: 12px 30px;
+            font-weight: 600;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(71, 85, 105, 0.3);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .required {
+            color: var(--danger-color);
+        }
+
+        @media (max-width: 992px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .box {
+                padding: 20px;
+            }
+            
+            .box-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .box-icon {
+                margin-right: 0;
+                margin-bottom: 10px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Checkout</h1>
+        <p>Complete your order details to proceed with payment</p>
+
+        <form id="checkoutForm">
+            <div class="form-group">
+                <label for="customerName">Full Name *</label>
+                <input 
+                    type="text" 
+                    id="customerName" 
+                    name="customer_name"
+                    placeholder="John Doe"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="customerEmail">Email *</label>
+                <input 
+                    type="email" 
+                    id="customerEmail" 
+                    name="customer_email"
+                    placeholder="john@example.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="customerPhone">Phone *</label>
+                <input 
+                    type="text" 
+                    id="customerPhone" 
+                    name="customer_phone"
+                    placeholder="+880 1712-345678"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="orderAmount">Amount *</label>
+                <input 
+                    type="number" 
+                    id="orderAmount" 
+                    name="amount"
+                    placeholder="100.00"
+                    step="0.01"
+                    value="100.00"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="productName">Product/Service</label>
+                <input 
+                    type="text" 
+                    id="productName" 
+                    name="product_name"
+                    placeholder="Premium Subscription"
+                    value="Test Product"
+                >
+            </div>
+
+            <button type="submit" class="btn" id="payBtn">
+                <span id="btnText">Proceed to Payment</span>
+                <span id="btnLoader" style="display:none;">Processing...</span>
+            </button>
+        </form>
+
+        <div id="status" class="status"></div>
+
+        <div class="code-block">
+            <pre>// Quick Start
+const payment = new PaymentSDK({
+    title: 'Complete Payment',
+    onSuccess: (data) => {
+        console.log('Success!', data);
+    },
+    onError: (data) => {
+        conYour backend endpoint
+        const BACKEND_URL = '/api/create-payment.php'; // Change to your actual endpoint
+
+        // Initialize Payment SDK
+        const paymentSDK = new PaymentSDK({
+            title: 'Complete Your Payment',
+            closeOnSuccess: true,
+            allowClose: true,
+            debug: true,
+            
+            onSuccess: async function(data) {
+                console.log('✅ Payment successful:', data);
+                showStatus('Payment completed! Verifying...', 'success');
+                
+                // Verify payment with your backend
+                try {
+                    const response = await fetch('/api/verify-payment.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            transaction_id: data.transaction_id || data.tran_id,
+                            order_id: data.order_id
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        showStatus('Payment verified successfully!', 'success');
+                        // Redirect to success page
+                        setTimeout(() => {
+                            window.location.href = '/success.html?order=' + result.order_id;
+                        }, 2000);
+                    } else {
+                        showStatus('Payment verification failed!', 'error');
+                    }
+                } catch (error) {
+                    console.error('Verification error:', error);
+                    showStatus('Error verifying payment', 'error');
+                }
+            },
+            
+            onError: function(data) {
+                console.error('❌ Payment failed:', data);
+                showStatus('Payment failed. Please try again.', 'error');
+                enableForm();
+            },
+            
+            onClose: function() {
+                console.log('Modal closed');
+                enableForm();
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Get form data
+            const formData = new FormData(this);
+            const orderData = Object.fromEntries(formData.entries());
+            
+            // Add order ID
+            orderData.order_id = 'ORD-' + Date.now();
+            
+            console.log('Submitting order:', orderData);
+            
+            // Disable form
+            disableForm();
+            showStatus('Creating payment session...', 'success');
+            
+            try {
+                // Send to your backend
+                const response = await fetch(BACKEND_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(orderData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success && result.payment_url) {
+                    console.log('Payment URL received:', result.payment_url);
+                    
+                    // Hide status and open payment modal
+                    document.getElementById('status').style.display = 'none';
+                    
+                    // Open payment in modal
+                    paymentSDK.open(result.payment_url);
+                } else {
+                    showStatus(result.message || 'Failed to create payment session', 'error');
+                    enableForm();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('Error connecting to server. Please try again.', 'error');
+                enableForm();
+            }
+        });
+
+        function disableForm() {
+            document.getElementById('payBtn').disabled = true;
+            document.getElementById('btnText').style.display = 'none';
+            document.getElementById('btnLoader').style.display = 'inline';
+        }
+
+        function enableForm() {
+            document.getElementById('payBtn').disabled = false;
+            document.getElementById('btnText').style.display = 'inline';
+            document.getElementById('btnLoader').style.display = 'none'
+            if (!paymentUrl) {
+                alert('Please enter a payment URL');
+                return;
+            }
+
+            // Hide any previous status
+            document.getElementById('status').style.display = 'none';
+            
+            // Open payment modal
+            paymentSDK.open(paymentUrl);
+        }
+
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
