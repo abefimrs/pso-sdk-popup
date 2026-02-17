@@ -83,7 +83,7 @@
             overflow: hidden;
             background: transparent;
         }
-        
+
         .payment-modal-content {
             position: absolute;
             top: 0;
@@ -99,7 +99,7 @@
         .payment-modal-content.active {
             display: block;
         }
-        
+
         .payment-modal-iframe {
             width: 100%;
             height: 100%;
@@ -107,6 +107,11 @@
             display: block;
             background: transparent !important;
         }
+        
+        .payment-modal-content.active {
+            display: block;
+        }
+     
         
         .payment-modal-loader {
             position: absolute;

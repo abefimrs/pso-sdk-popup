@@ -327,7 +327,7 @@
                                             <div class="input-group">
                                                 <span class="input-group-text">BDT</span>
                                                 <input type="number" class="form-control" id="payable_amount" name="payable_amount" 
-                                                       value="10" step="0.01" min="0" required>
+                                                       value="100" step="0.01" min="0" required>
                                             </div>
                                         </div>
                                     </div>
@@ -342,7 +342,7 @@
                                             <div class="input-group">
                                                 <span class="input-group-text">BDT</span>
                                                 <input type="number" class="form-control" id="product_amount" name="product_amount" 
-                                                       value="10" step="0.01" min="0" required>
+                                                       value="100" step="0.01" min="0" required>
                                             </div>
                                         </div>
                                     </div>
@@ -591,7 +591,7 @@
     
     <script>
         // Configuration - UPDATE THIS!
-        const BACKEND_API = 'http://10.70.34.163:82/technonextpay_payment.php'; // Your backend endpoint
+        const BACKEND_API = 'http://10.70.34.163:82/technonextpay_payment_ajax.php'; // Your backend endpoint
         
         // Initialize Payment SDK
         const paymentSDK = new PaymentSDK({
@@ -599,9 +599,9 @@
             closeOnSuccess: true,
             allowClose: true,
             debug: true,
-        allowClose: false,
+            allowClose: false,
             // bKash will be detected and handled automatically
-    noIframeMethod: 'popup',  // or 'new_window', 'full_redirect', 'auto'
+            noIframeMethod: 'popup',  // or 'new_window', 'full_redirect', 'auto'
     
             
             onSuccess: async function(data) {
