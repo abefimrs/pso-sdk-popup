@@ -81,7 +81,7 @@
             flex: 1;
             position: relative;
             overflow: hidden;
-            background: #fff;
+            background: transparent;
         }
         
         .payment-modal-content {
@@ -93,7 +93,7 @@
             overflow: auto;
             padding: 20px;
             display: none;
-            background: #fff;
+            background: transparent;
         }
         
         .payment-modal-content.active {
@@ -105,6 +105,7 @@
             height: 100%;
             border: none;
             display: block;
+            background: transparent !important;
         }
         
         .payment-modal-loader {
